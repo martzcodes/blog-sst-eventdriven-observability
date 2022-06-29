@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.node {
+  stroke-linecap: round;
+}
+.link {
+  fill: none;
+}

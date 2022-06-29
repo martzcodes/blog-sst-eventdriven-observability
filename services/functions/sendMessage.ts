@@ -1,5 +1,6 @@
 import { DynamoDB, ApiGatewayManagementApi } from "aws-sdk";
 import { EventBridgeEvent } from "aws-lambda";
+import { parseExecution } from "./eventTracker";
 
 const TableName = process.env.tableName!;
 const websocketUrl = process.env.websocketUrl!;
@@ -7,10 +8,12 @@ const dynamoDb = new DynamoDB.DocumentClient();
 
 export const handler = async (event: EventBridgeEvent<string, any>) => {
   const messageData = JSON.stringify({
+    pk: `EVENT#${parseExecution(event.detail.execution)}`,
+    sk: `${new Date().getTime()}`,
+    account: event.account,
     source: event.source,
-    detailType: event["detail-type"],
-    execution: event.detail.execution,
-    detail: { meta: event.detail.meta },
+    detailType: event['detail-type'],
+    ...event.detail,
   });
   console.log(`messageData: ${messageData}`);
 

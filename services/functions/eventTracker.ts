@@ -4,7 +4,7 @@ import type { PutItemInput } from "aws-sdk/clients/dynamodb";
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
-const parseExecution = (execution?: string) => {
+export const parseExecution = (execution?: string) => {
   if (execution) {
     const splitExecution = execution.split(":");
     return splitExecution[splitExecution.length - 1];
