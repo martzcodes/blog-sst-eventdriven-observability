@@ -138,7 +138,8 @@ const buildGraph = ({
     y += 20;
     if (x > width / 2) x -= 100;
 
-    tooltip.style("left", x + "px").style("top", y + "px");
+    const box = svg.node()?.getBoundingClientRect();
+    tooltip.style("left", (x + (box?.x || 0) + window.scrollX) + "px").style("top", (y + (box?.y || 0) + window.scrollY) + "px");
   });
 
   svg
@@ -172,28 +173,21 @@ export const Timeline = ({ events = [] }: { events: any[]}) => {
         [`${taskTokens[c.TaskToken]}-${c.detailType}`]: Number(c.sk),
       };
     }, {});
-    let minTime = Infinity;
-    let maxTime = 0;
     const stepSet = new Set<string>([]);
     const detailTypes = events.filter((ev: any) => ev.meta?.incoming?.detailType).map((ev: any) => formatColor(ev));
     const color = d3.scaleOrdinal(d3.schemeSet2).domain(detailTypes);
     const friendlyEvents = events.filter((ev: any) => ev.meta?.incoming?.detailType)
       .map((ev: any) => {
-        ev.TaskToken = taskTokens[ev.TaskToken];
-        if (ev.meta?.incoming) {
-          ev.start =
-            starts[`${ev.TaskToken}-${ev.meta.incoming.detailType}`] / 1000;
-          ev.end = Number(ev.sk) / 1000;
+        const output = {...ev};
+        output.TaskToken = taskTokens[output.TaskToken];
+        if (output.meta?.incoming) {
+          output.start =
+            starts[`${output.TaskToken}-${output.meta.incoming.detailType}`] / 1000;
+          output.end = Number(output.sk) / 1000;
         }
-        if (Number(ev.sk) < minTime) {
-          minTime = Number(ev.sk) / 1000;
-        }
-        if (Number(ev.sk) > maxTime) {
-          maxTime = Number(ev.sk) / 1000;
-        }
-        stepSet.add(ev.stateName);
-        ev.color = d3.color(color(formatColor(ev)));
-        return ev;
+        stepSet.add(output.stateName);
+        output.color = d3.color(color(formatColor(ev)));
+        return output;
       })
       .sort((a: any, b: any) => {
         return Number(a.TaskToken) - Number(b.TaskToken);

@@ -72,7 +72,7 @@ export const Sankey = ({ events = [] }: { events: any[] }) => {
         ? ev.stateName
         : prevState;
       const link = `${previousState}:${
-        ev.meta?.incoming?.detailType || "task.finished"
+        ev.meta?.incoming?.detailType || "done"
       }$${ev.stateName}:${ev.detailType}`;
       if (Object.keys(linkMap).includes(link)) {
         linkMap[link] += 1;

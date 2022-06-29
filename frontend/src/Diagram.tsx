@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { line } from "d3";
 import { useEffect, useState } from "react";
 
 const buildGraph = ({ ref, data }: { ref: HTMLDivElement; data: any }) => {
@@ -13,7 +14,22 @@ const buildGraph = ({ ref, data }: { ref: HTMLDivElement; data: any }) => {
   const types: string[] = Array.from(
     new Set(data.links.map((d: { event: string }) => d.event))
   );
-  console.log(types);
+  const createTooltip = (el: any) => {
+    el.style("position", "absolute")
+      .style("pointer-events", "none")
+      .style("top", 0)
+      .style("opacity", 0)
+      .style("background", "white")
+      .style("border-radius", "5px")
+      .style("box-shadow", "0 0 10px rgba(0,0,0,.25)")
+      .style("padding", "10px")
+      .style("line-height", "1.3")
+      .style("font", "11px sans-serif");
+  };
+
+  const getTooltipContent = (d: any) => {
+    return `<b>Temp</b>`;
+  };
 
   const color = d3.scaleOrdinal(types, d3.schemeCategory10);
   function linkArc(d: any) {
@@ -36,7 +52,7 @@ const buildGraph = ({ ref, data }: { ref: HTMLDivElement; data: any }) => {
     .force("charge", d3.forceManyBody().strength(function (d, i) {
       var a = i == 0 ? -2000 : -1000;
       return a;
-  }).distanceMin(200).distanceMax(1000))
+  }).distanceMin(50).distanceMax(500))
     .force("x", d3.forceX())
     .force("y", d3.forceY());
 
@@ -60,6 +76,8 @@ const buildGraph = ({ ref, data }: { ref: HTMLDivElement; data: any }) => {
     .append("path")
     .attr("fill", color)
     .attr("d", "M0,-5L10,0L0,5");
+  
+  const tooltip = d3.select(document.createElement("div")).call(createTooltip);
 
   const link = svg
     .append("g")
@@ -101,12 +119,46 @@ const buildGraph = ({ ref, data }: { ref: HTMLDivElement; data: any }) => {
     .attr("stroke", "white")
     .attr("stroke-width", 3);
 
+  node.on("mouseover", function (d: MouseEvent) {
+    let elem: any;
+    d3.select(this)
+      .select("rect")
+      .attr("fill", (el: any) => {
+        elem = el;
+        return el.color.darker();
+      });
+
+    tooltip.style("opacity", 1).html(() => {
+      return getTooltipContent(elem);
+    });
+  })
+  .on("mouseleave", function (d) {
+    d3.select(this)
+      .select("rect")
+      .attr("fill", (el: any) => {
+        return el.color;
+      });
+    tooltip.style("opacity", 0);
+  });
+
+svg.on("mousemove", function (d) {
+  let [x, y] = d3.pointer(d);
+  y += 20;
+  if (x > width / 2) x -= 100;
+
+  const box = svg.node()?.parentElement?.getBoundingClientRect();
+  const tooltipX = (x + (box?.x || 0) + window.scrollX + width / 4);
+  console.log(tooltipX);
+  tooltip.style("left", tooltipX + "px").style("top", (y + (box?.y || 0) + window.scrollY) + "px");
+});
+
   simulation.on("tick", () => {
     link.attr("d", linkArc);
     node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
   });
 
   ref.append(svg.node()!);
+  ref.append(tooltip.node()!);
 };
 
 export const Diagram = ({ events = [] }: { events: any[] }) => {
@@ -135,7 +187,7 @@ export const Diagram = ({ events = [] }: { events: any[] }) => {
           name: eventSource,
           type: eventSourceType,
           incoming: new Set<string>(
-            eventSourceType === "step-function" ? ["task.finished"] : []
+            eventSourceType === "step-function" ? ["done"] : []
           ),
           outgoing: new Set<string>([]),
           account: ev.account,
@@ -149,12 +201,9 @@ export const Diagram = ({ events = [] }: { events: any[] }) => {
       );
       outgoing.add(ev.detailType);
     });
-    console.log(outgoing);
     const links = [...outgoing].reduce((p, c) => {
       const outSources = Object.keys(eventSources).filter((ev) => {
-        return [...eventSources[ev].outgoing].filter((evOut: any) =>
-          evOut.endsWith(c)
-        ).length;
+        return [...eventSources[ev].outgoing].filter((evOut: any) => evOut.endsWith(`#${c}`)).length;
       });
       const inSources = Object.keys(eventSources).filter((ev) => {
         return [...eventSources[ev].incoming].filter((evIn: any) => evIn === c)
@@ -172,7 +221,6 @@ export const Diagram = ({ events = [] }: { events: any[] }) => {
       }, [] as any[]);
       return [...p, ...outLinks];
     }, [] as any);
-    console.log(links);
     const data = {
       nodes: Array.from(
         new Set(links.flatMap((l: any) => [l.source, l.target])),

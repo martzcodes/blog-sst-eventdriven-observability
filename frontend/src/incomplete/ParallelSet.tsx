@@ -32,7 +32,7 @@ export const ParallelSet = ({ events = [] }: { events: any[] }) => {
         prevState = stateNames[prevStateInd - 1];
       }
       const previousDetailType =
-        ev.meta?.incoming?.detailType || "task.finished";
+        ev.meta?.incoming?.detailType || "done";
       const previousState = ev.meta?.incoming?.detailType
         ? ev.stateName
         : prevState;
@@ -84,7 +84,7 @@ export const ParallelSet = ({ events = [] }: { events: any[] }) => {
         .filter((id) => id.startsWith(`${c}$`))
         .map((id) => {
           if (ind !== 0) {
-            // first of the state steps ends up all the previous states task.finished
+            // first of the state steps ends up all the previous states done
             // otherwise it's 1-1 with task token for the previous
             const splitId = id.split("$");
             const [state, step, token] = splitId;
@@ -95,7 +95,7 @@ export const ParallelSet = ({ events = [] }: { events: any[] }) => {
             let parents = [
               `${mapped.previousState}$${mapped.previousDetailType}$${mapped.taskToken}`,
             ];
-            if (mapped.previousDetailType === "task.finished") {
+            if (mapped.previousDetailType === "done") {
               const prevInd = p.findIndex(
                 (prevRow: any) =>
                   prevRow.filter((prev: any) =>
@@ -125,7 +125,7 @@ export const ParallelSet = ({ events = [] }: { events: any[] }) => {
       console.log(c);
       const stateMapped = stateMap[c];
       const keys = Object.keys(stateMapped).filter(
-        (key: any) => key !== "task.finished"
+        (key: any) => key !== "done"
       );
       return [
         ...p,

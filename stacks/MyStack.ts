@@ -1,4 +1,5 @@
 import { StackContext, Api, Table, ViteStaticSite, WebSocketApi, EventBus } from "@serverless-stack/resources";
+import { RemovalPolicy } from "aws-cdk-lib";
 import { EventBus as CdkEventBus } from "aws-cdk-lib/aws-events";
 
 export function MyStack({ stack }: StackContext) {
@@ -6,8 +7,15 @@ export function MyStack({ stack }: StackContext) {
     fields: {
       pk: "string",
       sk: "string",
+      ttl: "number",
     },
+    timeToLiveAttribute: "ttl",
     primaryIndex: { partitionKey: "pk", sortKey: "sk", },
+    cdk: {
+      table: {
+        removalPolicy: RemovalPolicy.DESTROY,
+      }
+    }
   });
 
   const socketApi = new WebSocketApi(stack, "SocketApi", {

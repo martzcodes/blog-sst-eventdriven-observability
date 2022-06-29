@@ -137,7 +137,7 @@ export const Tree = ({ events = [] }: { events: any[] }) => {
     //   const previousState = ev.meta?.incoming?.detailType
     //     ? ev.stateName
     //     : prevState;
-    //   const link = `${previousState}:${ev.meta?.incoming?.detailType || "task.finished"}$${ev.stateName}:${ev.detailType}`;
+    //   const link = `${previousState}:${ev.meta?.incoming?.detailType || "done"}$${ev.stateName}:${ev.detailType}`;
     //   if (Object.keys(linkMap).includes(link)) {
     //     linkMap[link] += 1;
     //   } else {

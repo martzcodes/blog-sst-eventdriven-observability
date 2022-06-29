@@ -6,14 +6,38 @@ const formatDate = (d: any) => {
 };
 
 export const Table = ({ events = [] }: { events: any[]}) => {
-  const [taskTokens, setTaskTokens] = useState<Record<string, string>>({})
+  const [taskTokens, setTaskTokens] = useState<Record<string, string>>({});
+  const [tableEvents, setTableEvents] = useState<any>([]);
   
   const processEvents = async () => {
     const states = events.filter((ev: any) => !ev.meta);
-    const taskTokens = states.reduce((p: any, c: any, ind: number) => {
+    const tokens = states.reduce((p: any, c: any, ind: number) => {
       return { ...p, [c.TaskToken]: ind };
     }, {} as any);
-    setTaskTokens(taskTokens);
+    setTaskTokens(tokens);
+    const starts = events.reduce((p: any, c: any) => {
+      return {
+        ...p,
+        [`${tokens[c.TaskToken]}-${c.detailType}`]: Number(c.sk),
+      };
+    }, {});
+    const stepSet = new Set<string>([]);
+    const friendlyEvents = events.filter((ev: any) => ev.meta?.incoming?.detailType)
+      .map((ev: any) => {
+        const output = {...ev};
+        output.TaskToken = tokens[output.TaskToken];
+        if (output.meta?.incoming) {
+          output.start =
+            starts[`${output.TaskToken}-${output.meta.incoming.detailType}`] / 1000;
+          output.end = Number(output.sk) / 1000;
+        }
+        stepSet.add(output.stateName);
+        return output;
+      })
+      .sort((a: any, b: any) => {
+        return Number(a.TaskToken) - Number(b.TaskToken);
+      });
+    setTableEvents([...friendlyEvents]);
   };
 
   useEffect(() => {
@@ -36,7 +60,7 @@ export const Table = ({ events = [] }: { events: any[]}) => {
           </tr>
         </thead>
         <tbody>
-          {events.filter((ev: any) => ev.start && ev.end).map((ev) => (
+          {tableEvents.filter((ev: any) => ev.start && ev.end).map((ev: any) => (
             <tr key={ev.sk}>
               <td>{ev.start ? formatDate(ev.start) : ""}</td>
               <td>{formatDate(ev.end || Number(ev.sk))}</td>

@@ -24,6 +24,7 @@ export const handler = async (event: EventBridgeEvent<string, any>) => {
       account: event.account,
       source: event.source,
       detailType: event['detail-type'],
+      ttl: Math.ceil((new Date().getTime() + 24 * 60 * 60 * 1000) / 1000),
       ...detail,
     },
   };
@@ -38,6 +39,7 @@ export const handler = async (event: EventBridgeEvent<string, any>) => {
       account: event.account,
       source: event.source,
       detailType: event['detail-type'],
+      ttl: Math.ceil((new Date().getTime() + 24 * 60 * 60 * 1000) / 1000),
       ...detail
     },
   };

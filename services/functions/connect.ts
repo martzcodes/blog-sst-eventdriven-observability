@@ -10,6 +10,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     Item: {
       pk: `CONNECTION`,
       sk: event.requestContext.connectionId,
+      ttl: Math.ceil((new Date().getTime() + 24 * 60 * 60 * 1000) / 1000),
     },
   };
 
